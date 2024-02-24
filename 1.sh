@@ -23,15 +23,33 @@ resp_fee=$(curl --silent 'https://s.amizone.net/FeeStructure/FeeStructure/AllFee
 
 class(){
 
-read -p "Enter the date in YYYY-MM-DD format: " start_date
-read -p "Enter the date in YYYY-MM-DD format: " end_date
+read -p "Enter the start date in YYYY-MM-DD format: " start_date
+read -p "Enter the end date in YYYY-MM-DD format: " end_date
 
 class=$(curl --silent "https://s.amizone.net/Calendar/home/GetDiaryEvents?start=$start_date&end=$end_date&_=1707456987909" -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0' -H 'Accept: application/json, text/javascript, */*; q=0.01' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: gzip, deflate, br' -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' -H 'Sec-Fetch-Site: same-origin' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$requestcookie; .ASPXAUTH=$asp")
 }
 
 
 attendance(){
-attendance=$(curl --silent 'https://s.amizone.net/Home/_Home?X-Requested-With=XMLHttpRequest' --compressed -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0' -H 'Accept: */*' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: gzip, deflate, br' -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' -H 'Sec-Fetch-Site: same-origin' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$request; .ASPXAUTH=$asp")
+attendance_request=$(curl --silent 'https://s.amizone.net/Home/_Home?X-Requested-With=XMLHttpRequest' --compressed -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0' -H 'Accept: */*' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: gzip, deflate, br' -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' -H 'Sec-Fetch-Site: same-origin' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$request; .ASPXAUTH=$asp")
+input_data=$(echo "$attendance_request" | grep -E 'sub-code|class-count' | sed 's/^[[:space:]]*//' | head -n 18 | sed -e 's/<[^>]*>//g' | sed 's/ \{2,\}/&\n/' | sed 's/\s*$//')
+
+x='['
+xcount=$(echo "$input_data" | wc -l)
+
+for (( i=0; i<xcount; i+=3 )); do
+    code=$(echo "$input_data" | sed -n "$((i+1))p")
+    title=$(echo "$input_data" | sed -n "$((i+2))p")
+    completion_percentage=$(echo "$input_data" | sed -n "$((i+3))p")
+    x+='{"code":"'"$code"'", "title":"'"$title"'", "completion_percentage":"'"$completion_percentage"'"}'
+    if [ $((i+3)) -lt $xcount ]; then
+        x+=','
+    fi
+done
+
+x+=']'
+
+echo "$x"
 }
 
 count=0
@@ -50,7 +68,7 @@ do
 	echo "$class"
 	;;
 	4) attendance
-	echo "$attendance"
+	echo " " 
 	;;
 	5) count=1
 	;;
