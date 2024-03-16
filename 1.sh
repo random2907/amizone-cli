@@ -59,6 +59,60 @@ fee(){
 	echo "$req_fee"
 }
 
+course_list(){
+
+	read -p "Enter the semester number: " sem
+	local req_course=$(curl -s 'https://s.amizone.net/Academics/MyCourses/CourseListSemWise' --compressed -X POST -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0' -H 'Accept: */*' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: gzip, deflate, br' -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Origin: https://s.amizone.net' -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' -H 'Sec-Fetch-Site: same-origin' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$requestcookie; ASP.NET_SessionId=$session; .ASPXAUTH=$asp" --data-raw "sem=$sem")
+	data=$(echo "$req_course" | sed 's/\r$//')
+
+	compulsory_start=$(echo "$data" | grep -n '<tbody>' | head -n 1 | tail -n 1 | cut -d ':' -f 1)
+
+	compulsory_end=$(echo "$data" | grep -n '</tbody>' | head -n 1 |tail -n 1 | cut -d ':' -f 1)
+
+	domain_start=$(echo "$data" | grep -n '<tbody>' | head -n 2 | tail -n 1 | cut -d ':' -f 1)
+
+	domain_end=$(echo "$data" | grep -n '</tbody>' | head -n 2 | tail -n 1 | cut -d ':' -f 1)
+
+	compulsory_data=$(echo "$data" | sed -n "${compulsory_start},${compulsory_end}p" | sed 's/^[[:space:]]*//' | sed -e 's/<[^>]*>//g' | sed 's/View//g' | sed '/^$/d')
+	compulsory_link=$(echo "$data" | sed -n "${compulsory_start},${compulsory_end}p" | grep -oP '(?<=href=")[^"]*')
+
+	domain_data=$(echo "$data" | sed -n "${domain_start},${domain_end}p" | sed 's/^[[:space:]]*//' | sed -e 's/<[^>]*>//g' | sed 's/View//g' | sed '/^$/d')
+	domain_link=$(echo "$data" | sed -n "${domain_start},${domain_end}p" | grep -oP '(?<=href=")[^"]*')
+
+	input_data=$(echo "$compulsory_data" && echo "$domain_data")
+input_link=$(echo "$compulsory_link" && echo "$domain_link")
+	local x='['
+	local xcount=$(echo "$input_data" | wc -l)
+	if (( $xcount % 4 == 0 )); then
+		local jump=4
+	else
+		local jump=5
+	fi
+
+	for (( i=0; i<xcount; i+=$jump )); do
+		local code=$(echo "$input_data" | sed -n "$((i+1))p")
+		local title=$(echo "$input_data" | sed -n "$((i+2))p")
+		local type=$(echo "$input_data" | sed -n "$((i+3))p")
+		local attendence=$(echo "$input_data" | sed -n "$((i+4))p")
+		if (( $jump == 5 )); then
+			local marks=$(echo "$input_data" | sed -n "$((i+5))p")
+		fi
+			local link=$(echo "$input_link" | sed -n "$((i/$jump+1))p")
+		if (( $jump == 4 )); then
+			local x+='{"code":"'"$code"'","title":"'"$title"'","type":"'"$type"'","attendence":"'"$attendence"'","link":"'"$link"'"}'
+		else
+			local x+='{"code":"'"$code"'","title":"'"$title"'","type":"'"$type"'","attendence":"'"$attendence"'","marks":"'"$marks"'","link":"'"$link"'"}'
+		fi
+		if [ $((i+$jump)) -lt $xcount ]; then
+			x+=','
+		fi
+	done
+
+	x+=']'
+	echo "$x"
+
+
+}
 class_schedule(){
 
 	read -p "Enter the start date in YYYY-MM-DD format: " start_date
@@ -80,14 +134,14 @@ attendance(){
 	local xcount=$(echo "$input_data" | wc -l)
 
 	for (( i=0; i<xcount; i+=3 )); do
-    	local code=$(echo "$input_data" | sed -n "$((i+1))p")
-    	local title=$(echo "$input_data" | sed -n "$((i+2))p")
-    	local completion_percentage=$(echo "$input_data" | sed -n "$((i+3))p")
-    	local x+='{"code":"'"$code"'", "title":"'"$title"'", "completion_percentage":"'"$completion_percentage"'"}'
-    	if [ $((i+3)) -lt $xcount ]; then
-        	x+=','
-    	fi
-		done
+		local code=$(echo "$input_data" | sed -n "$((i+1))p")
+		local title=$(echo "$input_data" | sed -n "$((i+2))p")
+		local completion_percentage=$(echo "$input_data" | sed -n "$((i+3))p")
+		local x+='{"code":"'"$code"'", "title":"'"$title"'", "completion_percentage":"'"$completion_percentage"'"}'
+		if [ $((i+3)) -lt $xcount ]; then
+			x+=','
+		fi
+	done
 
 	x+=']'
 
@@ -98,21 +152,23 @@ attendance(){
 count=0
 while [ $count != 1 ]
 do
-	menu="\n1. Exam Result\n2. Fee Structure\n3. Class Schedule\n4. Attendance\n5. Exit\nEnter your choice: "
+	menu="\n1. Exam Result\n2. Fee Structure\n3. Class Schedule\n4. Course\n5. Attendance\n6. Exit\nEnter your choice: "
 	read -p "$(echo -e $menu)" choice
 	case $choice in
-	1) exam_result
-	;;
-	2) fee
-	;;
-	3) class_schedule
-	;;
-	4) attendance
-	;;
-	5) count=1
-	;;
-	*) echo "Invalid choice"
-	;;
-esac
+		1) exam_result
+			;;
+		2) fee
+			;;
+		3) class_schedule
+			;;
+		4) course_list
+			;;
+		5) attendance
+			;;
+		6) count=1
+			;;
+		*) echo "Invalid choice"
+			;;
+	esac
 done
 
