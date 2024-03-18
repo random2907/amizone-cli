@@ -83,10 +83,10 @@ course_list(){
 input_link=$(echo "$compulsory_link" && echo "$domain_link")
 	local x='['
 	local xcount=$(echo "$input_data" | wc -l)
-	if (( $xcount % 4 == 0 )); then
-		local jump=4
-	else
+	if (echo "$input_data" | grep -q ']' ); then
 		local jump=5
+	else
+		local jump=4
 	fi
 
 	for (( i=0; i<xcount; i+=$jump )); do
