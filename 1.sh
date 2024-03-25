@@ -115,8 +115,13 @@ input_link=$(echo "$compulsory_link" && echo "$domain_link")
 }
 class_schedule(){
 
-	read -p "Enter the start date in YYYY-MM-DD format: " start_date
-	read -p "Enter the end date in YYYY-MM-DD format: " end_date
+	if [ $1 ]; then
+		start_date=$(date -u '+%Y-%m-%d')
+		end_date=$(date -u '+%Y-%m-%d')
+	else
+		read -p "Enter the start date in YYYY-MM-DD format: " start_date
+		read -p "Enter the end date in YYYY-MM-DD format: " end_date
+	fi
 
 	local class=$(curl -s "https://s.amizone.net/Calendar/home/GetDiaryEvents?start=$start_date&end=$end_date&_=1707456987909"  -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$requestcookie; .ASPXAUTH=$asp")
 
@@ -152,7 +157,7 @@ attendance(){
 count=0
 while [ $count != 1 ]
 do
-	menu="\n1. Exam Result\n2. Fee Structure\n3. Class Schedule\n4. Course\n5. Attendance\n6. Exit\nEnter your choice: "
+	menu="\n1. Exam Result\n2. Fee Structure\n3. Calender Schedule\n4. Course\n5. Attendance\n6. Class Schedule\n7. Exit\nEnter your choice: "
 	read -p "$(echo -e $menu)" choice
 	case $choice in
 		1) exam_result
@@ -165,7 +170,9 @@ do
 			;;
 		5) attendance
 			;;
-		6) count=1
+		6) class_schedule 1
+			;;
+		7) count=1
 			;;
 		*) echo "Invalid choice"
 			;;
