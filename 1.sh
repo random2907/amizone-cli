@@ -1,4 +1,4 @@
-#/bin/env bash
+#!/bin/env bash
 
 read -p "Enter User ID: " username
 read -sp "Enter Password: " password
