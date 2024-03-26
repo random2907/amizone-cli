@@ -19,6 +19,7 @@ This Bash script interacts with Amizone, an educational platform, providing func
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/your-username/amizone-bash-script.git
-   cd amizone-bash-script
+   git clone https://github.com/random2907/amizone-cli.git
+   cd amizone-cli
+   ```
 
