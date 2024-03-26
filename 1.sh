@@ -52,6 +52,29 @@ exam_result(){
 
 }
 
+exam_schedule(){
+
+	local exam_sch_req=$(curl -s 'https://s.amizone.net/Examination/ExamSchedule?X-Requested-With=XMLHttpRequest' -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$request_cookie; .ASPXAUTH=$asp; asp.net_sessionid=$session")
+
+	local input_data=$(echo "$exam_sch_req" | sed 's/\r$//' | grep "data-title=" | sed 's/^[[:space:]]*//' | sed -e 's/<[^>]*>//g')
+	local x='['
+	local xcount=$(echo "$input_data" | wc -l)
+
+	for (( i=0; i<xcount; i+=5)); do
+		local Course_Code=$(echo "$input_data" | sed -n "$((i+1))p")
+		local Course_Title=$(echo "$input_data" | sed -n "$((i+2))p")
+		local Date=$(echo "$input_data" | sed -n "$((i+3))p")
+		local Time=$(echo "$input_data" | sed -n "$((i+4))p")
+		local Exam_Type=$(echo "$input_data" | sed -n "$((i+5))p"| cut --delimiter=" " --fields=4)
+		x+='{"Course_Code":"'"$Course_Code"'", "Course_Title":"'"$Course_Title"'", "Date":"'"$Date"'", "Time":"'"$Time"'", "Exam_Type":"'"$Exam_Type"'"}'
+		if [ $((i+5)) -lt $xcount ]; then
+			x+=','
+		fi
+	done
+	x+=']'
+	echo "$x"
+
+}
 
 fee(){
 
@@ -80,7 +103,7 @@ course_list(){
 	domain_link=$(echo "$data" | sed -n "${domain_start},${domain_end}p" | grep -oP '(?<=href=")[^"]*')
 
 	input_data=$(echo "$compulsory_data" && echo "$domain_data")
-input_link=$(echo "$compulsory_link" && echo "$domain_link")
+	input_link=$(echo "$compulsory_link" && echo "$domain_link")
 	local x='['
 	local xcount=$(echo "$input_data" | wc -l)
 	if (echo "$input_data" | grep -q ']' ); then
@@ -97,7 +120,7 @@ input_link=$(echo "$compulsory_link" && echo "$domain_link")
 		if (( $jump == 5 )); then
 			local marks=$(echo "$input_data" | sed -n "$((i+5))p")
 		fi
-			local link=$(echo "$input_link" | sed -n "$((i/$jump+1))p")
+		local link=$(echo "$input_link" | sed -n "$((i/$jump+1))p")
 		if (( $jump == 4 )); then
 			local x+='{"code":"'"$code"'","title":"'"$title"'","type":"'"$type"'","attendence":"'"$attendence"'","link":"'"$link"'"}'
 		else
@@ -157,22 +180,24 @@ attendance(){
 count=0
 while [ $count != 1 ]
 do
-	menu="\n1. Exam Result\n2. Fee Structure\n3. Calender Schedule\n4. Course\n5. Attendance\n6. Class Schedule\n7. Exit\nEnter your choice: "
+	menu="\n1. Exam Result\n2. Exam Schedule\n3. Fee Structure\n4. Calender Schedule\n5. Course\n6. Attendance\n7. Class Schedule\n8. Exit\nEnter your choice: "
 	read -p "$(echo -e $menu)" choice
 	case $choice in
 		1) exam_result
 			;;
-		2) fee
+		2) exam_schedule
 			;;
-		3) class_schedule
+		3) fee
 			;;
-		4) course_list
+		4) class_schedule
 			;;
-		5) attendance
+		5) course_list
 			;;
-		6) class_schedule 1
+		6) attendance
 			;;
-		7) count=1
+		7) class_schedule 1
+			;;
+		8) count=1
 			;;
 		*) echo "Invalid choice"
 			;;
