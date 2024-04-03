@@ -48,7 +48,7 @@ exam_result(){
 		done
 	x+=']'
 
-	echo $x
+	echo "$x"
 
 }
 
