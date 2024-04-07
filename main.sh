@@ -19,33 +19,33 @@ asp=$(curl -s 'https://s.amizone.net/' -X POST  -H 'Content-Type: application/x-
 session=$(curl -s 'https://s.amizone.net/' -X POST  -H 'Referer: https://s.amizone.net/' -H "Connection: keep-alive" -H "Cookie: __RequestVerificationToken=$requestcookie" --data-raw "__RequestVerificationToken=$requestver1" -c - | grep -oP 'ASP.NET_SessionId\t\K[^\t]*')
 
 exam_result(){
-	
+
 	read -p "Enter the semester number: " sem
 
 	local exam=$(curl -s 'https://s.amizone.net/Examination/Examination?X-Requested-With=XMLHttpRequest' -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$requestcookie; ASP.NET_SessionId=$session; .ASPXAUTH=$asp" --data-raw "sem=$sem")
 
 	local input_data=$(echo "$exam" | grep "data-title=" | head -n -4 | sed 's/^[[:space:]]*//' | sed -e 's/<[^>]*>//g' | sed 's/\s*$//')
 	local overall=$(echo "$exam" | grep "&nbsp" | tail -n 4 | sed 's/^[[:space:]]*//' | sed -e 's/<[^>]*>//g' | sed 's/\s*$//')
-	
+
 	local x='['
 	local xcount=$(echo "$input_data" | wc -l)
 
 	for (( i=0; i<xcount; i+=10 )); do
-    	local Sno=$(echo "$input_data" | sed -n "$((i+1))p")
-    	local Course_Code=$(echo "$input_data" | sed -n "$((i+2))p")
-    	local Course_Title=$(echo "$input_data" | sed -n "$((i+3))p")
-    	local Max_Total=$(echo "$input_data" | sed -n "$((i+4))p")
-    	local ACU=$(echo "$input_data" | sed -n "$((i+5))p")
-    	local Go=$(echo "$input_data" | sed -n "$((i+6))p")
-    	local GP=$(echo "$input_data" | sed -n "$((i+7))p")
-    	local CP=$(echo "$input_data" | sed -n "$((i+8))p")
-    	local ECU=$(echo "$input_data" | sed -n "$((i+9))p")
-    	local PublishDate=$(echo "$input_data" | sed -n "$((i+10))p")
-    	x+='{"Sno":"'"$Sno"'", "Course_Title":"'"$Course_Title"'", "Max_Total":"'"$Max_Total"'", "ACU":"'"$ACU"'", "Go":"'"$Go"'", "GP":"'"$GP"'", "CP":"'"$CP"'", "ECU":"'"$ECU"'", "PublishDate":"'"$PublishDate"'"}'
-    	if [ $((i+10)) -lt $xcount ]; then
-        	x+=','
-    	fi
-		done
+		local Sno=$(echo "$input_data" | sed -n "$((i+1))p")
+		local Course_Code=$(echo "$input_data" | sed -n "$((i+2))p")
+		local Course_Title=$(echo "$input_data" | sed -n "$((i+3))p")
+		local Max_Total=$(echo "$input_data" | sed -n "$((i+4))p")
+		local ACU=$(echo "$input_data" | sed -n "$((i+5))p")
+		local Go=$(echo "$input_data" | sed -n "$((i+6))p")
+		local GP=$(echo "$input_data" | sed -n "$((i+7))p")
+		local CP=$(echo "$input_data" | sed -n "$((i+8))p")
+		local ECU=$(echo "$input_data" | sed -n "$((i+9))p")
+		local PublishDate=$(echo "$input_data" | sed -n "$((i+10))p")
+		x+='{"Sno":"'"$Sno"'", "Course_Title":"'"$Course_Title"'", "Max_Total":"'"$Max_Total"'", "ACU":"'"$ACU"'", "Go":"'"$Go"'", "GP":"'"$GP"'", "CP":"'"$CP"'", "ECU":"'"$ECU"'", "PublishDate":"'"$PublishDate"'"}'
+		if [ $((i+10)) -lt $xcount ]; then
+			x+=','
+		fi
+	done
 	x+=']'
 
 	echo "$x"
