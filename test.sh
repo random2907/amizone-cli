@@ -3,7 +3,7 @@
 
 
 if [ $# -gt 0 ]; then
-	x=$(cat $1 | jq -r '.[] | .title, .start, .end')
+	x=$(jq -r '.[] | .title, .start, .end' < "$1")
 else
 	x=$(cat - | jq -r '.[] | .title, .start, .end')
 fi
