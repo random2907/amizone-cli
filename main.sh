@@ -20,15 +20,17 @@ asp=$(curl -s 'https://s.amizone.net/' -X POST  -H 'Content-Type: application/x-
 session=$(curl -s 'https://s.amizone.net/' -X POST  -H 'Referer: https://s.amizone.net/' -H "Connection: keep-alive" -H "Cookie: __RequestVerificationToken=$requestcookie" --data-raw "__RequestVerificationToken=$requestver1" -c - | grep -oP 'ASP.NET_SessionId\t\K[^\t]*')
 
 exam_result(){
-
+        
 	read -p "Enter the semester number: " sem
 
 	local exam=$(curl -s 'https://s.amizone.net/Examination/Examination?X-Requested-With=XMLHttpRequest' -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$requestcookie; ASP.NET_SessionId=$session; .ASPXAUTH=$asp" --data-raw "sem=$sem")
-
 	local input_data=$(echo "$exam" | grep "data-title=" | head -n -4 | sed 's/^[[:space:]]*//' | sed -e 's/<[^>]*>//g' | sed 's/\s*$//')
-	local overall=$(echo "$exam" | grep "&nbsp" | tail -n 4 | sed 's/^[[:space:]]*//' | sed -e 's/<[^>]*>//g' | sed 's/\s*$//')
-
+	local overall=$(echo "$exam" | grep "&nbsp" | tail -n 4 | sed 's/^[[:space:]]*//' | sed -e 's/<[^>]*>//g' | sed 's/\s*$//' | sed 's/&nbsp;//')
+        
 	local x='['
+        x+='{"Semester":"'"$(echo "$overall" | sed -n 1p)"'", "SGPA":"'"$(echo "$overall" | sed -n 2p)"'", "CGPA":"'"$(echo "$overall" | sed -n 3p)"'", "Back Papers":"'"$(echo "$overall" | sed -n 4p)"'"}'
+        x+=','
+
 	local xcount=$(echo "$input_data" | wc -l)
 
 	for (( i=0; i<xcount; i+=10 )); do
