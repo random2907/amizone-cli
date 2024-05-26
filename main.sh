@@ -89,7 +89,6 @@ course_list(){
 
 	read -p "Enter the semester number: " sem
 	local req_course=$(curl -s 'https://s.amizone.net/Academics/MyCourses/CourseListSemWise' --compressed -X POST -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Origin: https://s.amizone.net' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$requestcookie; ASP.NET_SessionId=$session; .ASPXAUTH=$asp" --data-raw "sem=$sem")
-        echo "$req_course" > test.html
 	data=$(echo "$req_course" | sed 's/\r$//')
 
 	compulsory_start=$(echo "$data" | grep -n '<tbody>' | head -n 1 | tail -n 1 | cut -d ':' -f 1)
