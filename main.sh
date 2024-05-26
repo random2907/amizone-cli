@@ -44,7 +44,7 @@ exam_result(){
 		local CP=$(echo "$input_data" | sed -n "$((i+8))p")
 		local ECU=$(echo "$input_data" | sed -n "$((i+9))p")
 		local PublishDate=$(echo "$input_data" | sed -n "$((i+10))p")
-		x+='{"Sno":"'"$Sno"'", "Course_Title":"'"$Course_Title"'", "Max_Total":"'"$Max_Total"'", "ACU":"'"$ACU"'", "Go":"'"$Go"'", "GP":"'"$GP"'", "CP":"'"$CP"'", "ECU":"'"$ECU"'", "PublishDate":"'"$PublishDate"'"}'
+		x+='{"Sno":"'"$Sno"'", "Course Code":"'"$Course_Code"'","Course_Title":"'"$Course_Title"'", "Max_Total":"'"$Max_Total"'", "ACU":"'"$ACU"'", "Go":"'"$Go"'", "GP":"'"$GP"'", "CP":"'"$CP"'", "ECU":"'"$ECU"'", "PublishDate":"'"$PublishDate"'"}'
 		if [ $((i+10)) -lt $xcount ]; then
 			x+=','
 		fi
@@ -89,6 +89,7 @@ course_list(){
 
 	read -p "Enter the semester number: " sem
 	local req_course=$(curl -s 'https://s.amizone.net/Academics/MyCourses/CourseListSemWise' --compressed -X POST -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Origin: https://s.amizone.net' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$requestcookie; ASP.NET_SessionId=$session; .ASPXAUTH=$asp" --data-raw "sem=$sem")
+        echo "$req_course" > test.html
 	data=$(echo "$req_course" | sed 's/\r$//')
 
 	compulsory_start=$(echo "$data" | grep -n '<tbody>' | head -n 1 | tail -n 1 | cut -d ':' -f 1)
@@ -100,10 +101,10 @@ course_list(){
 	domain_end=$(echo "$data" | grep -n '</tbody>' | head -n 2 | tail -n 1 | cut -d ':' -f 1)
 
 	compulsory_data=$(echo "$data" | sed -n "${compulsory_start},${compulsory_end}p" | sed 's/^[[:space:]]*//' | sed -e 's/<[^>]*>//g' | sed 's/View//g' | sed '/^$/d')
-	compulsory_link=$(echo "$data" | sed -n "${compulsory_start},${compulsory_end}p" | grep -oP '(?<=href=")[^"]*')
+	compulsory_link=$(echo "$data" | sed -n "${compulsory_start},${compulsory_end}p" | grep -oP '(?<=href=)[^ ]*' | sed 's/"//g')
 
 	domain_data=$(echo "$data" | sed -n "${domain_start},${domain_end}p" | sed 's/^[[:space:]]*//' | sed -e 's/<[^>]*>//g' | sed 's/View//g' | sed '/^$/d')
-	domain_link=$(echo "$data" | sed -n "${domain_start},${domain_end}p" | grep -oP '(?<=href=")[^"]*')
+	domain_link=$(echo "$data" | sed -n "${domain_start},${domain_end}p" | grep -oP '(?<=href=)[^ ]*' | sed 's/"//g')
 
 	input_data=$(echo "$compulsory_data" && echo "$domain_data")
 	input_link=$(echo "$compulsory_link" && echo "$domain_link")
