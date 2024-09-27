@@ -4,19 +4,16 @@ read -p "Enter User ID: " username
 read -sp "Enter Password: " password
 
 response=$(curl -is https://s.amizone.net/)
-
+loginform=$(echo "$response" | grep loginform | sed 's/"/\n/g')
+loginform_number=$(echo "$response" | grep loginform | sed 's/"/\n/g' | grep -n value= | cut --delimiter=: --fields=1)
 
 requestcookie=$(echo "$response" | grep "set-cookie:" | grep -i '^set-cookie: __RequestVerificationToken=' | awk -F '=' '{print $2}' | awk '{gsub(/;/,""); print $1}')
-
-
-
-requestver1=$(echo "$response" | grep '<form action="/" class=" validate-form" id="loginform" method="post" name="loginform"><input name="__RequestVerificationToken" type="hidden" value=' | grep -oP '<input[^>]*name="__RequestVerificationToken"[^>]*value="\K[^"]*')
-
-
-asp=$(curl -s 'https://s.amizone.net/' -X POST  -H 'Content-Type: application/x-www-form-urlencoded' -H 'Referer: https://s.amizone.net/' -H "Connection: keep-alive" -H "Cookie: __RequestVerificationToken=$requestcookie" --data-raw "__RequestVerificationToken=$requestver1&_UserName=$username&_QString=&_Password=$password" -c - | grep -oP '.ASPXAUTH\t\K[^\t]*')
-
-
-
+requestver1=$(echo "$loginform" | sed -n $(($(echo "$loginform_number" | sed -n 1p)+1))p)
+salt=$(echo "$loginform" | sed -n $(($(echo "$loginform_number" | sed -n 2p)+1))p)
+secret_no=$(echo "$loginform" | sed -n $(($(echo "$loginform_number" | sed -n 3p)+1))p)
+signature=$(echo "$loginform" | sed -n $(($(echo "$loginform_number" | sed -n 4p)+1))p)
+challenge=$(echo "$loginform" | sed -n $(($(echo "$loginform_number" | sed -n 5p)+1))p)
+asp=$(curl -s 'https://s.amizone.net/' -X POST  -H 'Content-Type: application/x-www-form-urlencoded' -H 'Referer: https://s.amizone.net/' -H "Connection: keep-alive" -H "Cookie: __RequestVerificationToken=$requestcookie" --data-raw "__RequestVerificationToken=$requestver1&Salt=$salt&SecretNumber=$secret_no&Signature=$signature&Challenge=$challenge&_UserName=$username&_QString=&_Password=$password&recaptchaToken=" -c - | grep -oP '.ASPXAUTH\t\K[^\t]*')
 session=$(curl -s 'https://s.amizone.net/' -X POST  -H 'Referer: https://s.amizone.net/' -H "Connection: keep-alive" -H "Cookie: __RequestVerificationToken=$requestcookie" --data-raw "__RequestVerificationToken=$requestver1" -c - | grep -oP 'ASP.NET_SessionId\t\K[^\t]*')
 
 exam_result(){
@@ -81,7 +78,7 @@ exam_schedule(){
 
 fee(){
 
-	local req_fee=$(curl -s 'https://s.amizone.net/FeeStructure/FeeStructure/AllFeeReceipt' -X POST  -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$requestcookie; ASP.NET_SessionId=$session; .ASPXAUTH=$asp" --data-raw 'ifeetype=1' | sed 's/^"\(.*\)"$/\1/' | tr -d '\\')
+	local req_fee=$(curl -s 'https://s.amizone.net/FeeStructure/FeeStructure/AllFeeReceipt' -X POST -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$requestcookie; ASP.NET_SessionId=$session; .ASPXAUTH=$asp" --data-raw 'ifeetype=1' | sed 's/^"\(.*\)"$/\1/' | tr -d '\\')
 	echo "$req_fee"
 }
 
