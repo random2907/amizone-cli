@@ -13,8 +13,8 @@ salt=$(echo "$loginform" | sed -n $(($(echo "$loginform_number" | sed -n 2p)+1))
 secret_no=$(echo "$loginform" | sed -n $(($(echo "$loginform_number" | sed -n 3p)+1))p)
 signature=$(echo "$loginform" | sed -n $(($(echo "$loginform_number" | sed -n 4p)+1))p)
 challenge=$(echo "$loginform" | sed -n $(($(echo "$loginform_number" | sed -n 5p)+1))p)
-asp=$(curl -s 'https://s.amizone.net/' -X POST  -H 'Content-Type: application/x-www-form-urlencoded' -H 'Referer: https://s.amizone.net/' -H "Connection: keep-alive" -H "Cookie: __RequestVerificationToken=$requestcookie" --data-raw "__RequestVerificationToken=$requestver1&Salt=$salt&SecretNumber=$secret_no&Signature=$signature&Challenge=$challenge&_UserName=$username&_QString=&_Password=$password&recaptchaToken=" -c - | grep -oP '.ASPXAUTH\t\K[^\t]*')
 session=$(curl -s 'https://s.amizone.net/' -X POST  -H 'Referer: https://s.amizone.net/' -H "Connection: keep-alive" -H "Cookie: __RequestVerificationToken=$requestcookie" --data-raw "__RequestVerificationToken=$requestver1" -c - | grep -oP 'ASP.NET_SessionId\t\K[^\t]*')
+asp=$(curl -s 'https://s.amizone.net/' -X POST  -H 'Content-Type: application/x-www-form-urlencoded' -H 'Referer: https://s.amizone.net/' -H "Connection: keep-alive" -H "Cookie: __RequestVerificationToken=$requestcookie" --data-raw "__RequestVerificationToken=$requestver1&Salt=$salt&SecretNumber=$secret_no&Signature=$signature&Challenge=$challenge&_UserName=$username&_QString=&_Password=$password&recaptchaToken=" -c - | grep -oP '.ASPXAUTH\t\K[^\t]*')
 
 exam_result(){
         
