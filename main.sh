@@ -176,30 +176,53 @@ attendance(){
 
 }
 
+faculty(){
+        local faculty_request=$(curl -s 'https://s.amizone.net/FacultyFeeback/FacultyFeedback?X-Requested-With=XMLHttpRequest' -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Connection: keep-alive' -H "Cookie: ASP.NET_SessionId=$session; __RequestVerificationToken=$requestcookie; .ASPXAUTH=$asp")
+        local token=$(echo "$faculty_request" | grep -oP '(?<=value=)[^ ]*' | sed 's/"//g')
+        local faculty_request_data=$(echo "$faculty_request" | grep -oP '(?<=href=)[^ ]*' | sed 's/"//g' | grep "_FeedbackRating" | sed 's/amp;//g')
+        local max=$(echo "$faculty_request_data" | wc -l )
+	for (( i=1; i<=max; i+=1 )); do
+                local per_faculty=$(echo "$faculty_request_data" | sed -n "$i"p | sed 's/%2F/\//g')
+                local token=$(curl -s "https://s.amizone.net$per_faculty" --compressed -X POST -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Origin: https://s.amizone.net' -H "Cookie: ASP.NET_SessionId=$session; __RequestVerificationToken=$requestcookie; .ASPXAUTH=$asp" --data-raw 'X-Requested-With=XMLHttpRequest' | grep "/FacultyFeeback/FacultyFeedback/SaveFeedbackRatin" | grep -oP '(?<=value=)[^ ]*' | sed 's/"//g')
+                local course_type=$(echo "$per_faculty" | grep -o 'CourseType=[^&]*' | cut -d'=' -f2)
+                local det_id=$(echo "$per_faculty" | grep -o 'DetID=[^&]*' | cut -d'=' -f2)
+                local faculty_id=$(echo "$per_faculty" | grep -o 'FacultyStaffID=[^&]*' | cut -d'=' -f2)
+                local sr_no=$(echo "$per_faculty" | grep -o 'SrNo=[^&]*' | cut -d'=' -f2)
+                echo $course_type
+                echo $det_id
+                echo $faculty_id
+                echo $sr_no
+                echo $token
+                curl -s 'https://s.amizone.net/FacultyFeeback/FacultyFeedback/SaveFeedbackRating' --compressed -X POST -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.0' -H 'Accept: */*' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: gzip, deflate, br, zstd' -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Origin: https://s.amizone.net' -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' -H 'Sec-Fetch-Site: same-origin' -H 'Connection: keep-alive' -H "Cookie: ASP.NET_SessionId=$session; __RequestVerificationToken=$requestcookie; .ASPXAUTH=$asp" --data-raw "__RequestVerificationToken=$token&CourseType=$course_type&clsCourseFaculty.iDetId=$det_id&clsCourseFaculty.iFacultyStaffId=$faculty_id&clsCourseFaculty.iSRNO=$sr_no&FeedbackRating%5B0%5D.iAspectId=1&FeedbackRating%5B0%5D.Rating=5&FeedbackRating%5B1%5D.iAspectId=3&FeedbackRating%5B1%5D.Rating=5&FeedbackRating%5B2%5D.iAspectId=4&FeedbackRating%5B2%5D.Rating=5&FeedbackRating%5B3%5D.iAspectId=5&FeedbackRating%5B3%5D.Rating=5&FeedbackRating%5B4%5D.iAspectId=6&FeedbackRating%5B4%5D.Rating=5&FeedbackRating%5B5%5D.iAspectId=7&FeedbackRating%5B5%5D.Rating=5&FeedbackRating%5B6%5D.iAspectId=8&FeedbackRating%5B6%5D.Rating=5&FeedbackRating%5B7%5D.iAspectId=9&FeedbackRating%5B7%5D.Rating=5&FeedbackRating%5B8%5D.iAspectId=10&FeedbackRating%5B8%5D.Rating=5&FeedbackRating%5B9%5D.iAspectId=11&FeedbackRating%5B9%5D.Rating=5&FeedbackRating%5B10%5D.iAspectId=12&FeedbackRating%5B10%5D.Rating=5&FeedbackRating%5B11%5D.iAspectId=13&FeedbackRating%5B11%5D.Rating=5&FeedbackRating%5B12%5D.iAspectId=14&FeedbackRating%5B12%5D.Rating=5&FeedbackRating%5B13%5D.iAspectId=15&FeedbackRating%5B13%5D.Rating=5&FeedbackRating%5B14%5D.iAspectId=18&FeedbackRating%5B14%5D.Rating=5&FeedbackRating%5B15%5D.iAspectId=28&FeedbackRating%5B15%5D.Rating=5&FeedbackRating%5B16%5D.iAspectId=22&FeedbackRating%5B16%5D.Rating=5&FeedbackRating%5B17%5D.iAspectId=23&FeedbackRating%5B17%5D.Rating=5&FeedbackRating%5B18%5D.iAspectId=24&FeedbackRating%5B18%5D.Rating=5&FeedbackRating%5B19%5D.iAspectId=25&FeedbackRating%5B19%5D.Rating=5&FeedbackRating_Q1Rating=1&FeedbackRating_Q2Rating=1&FeedbackRating_Q3Rating=1&FeedbackRating_Q5Rating=1&FeedbackRating_Comments=Taught+us+well&X-Requested-With=XMLHttpRequest"
+        done
+}
+
 count=0
 while [ $count != 1 ]
 do
-	menu="\n1. Exam Result\n2. Exam Schedule\n3. Fee Structure\n4. Calender Schedule\n5. Course\n6. Attendance\n7. Class Schedule\n8. Exit\nEnter your choice: "
-	read -p "$(echo -e $menu)" choice
-	case $choice in
-		1) exam_result
-			;;
-		2) exam_schedule
-			;;
-		3) fee
-			;;
-		4) class_schedule
-			;;
-		5) course_list
-			;;
-		6) attendance
-			;;
-		7) class_schedule 1
-			;;
-		8) count=1
-			;;
-		*) echo "Invalid choice"
-			;;
-	esac
+        menu="\n1. Exam Result\n2. Exam Schedule\n3. Fee Structure\n4. Calender Schedule\n5. Course\n6. Attendance\n7. Class Schedule\n8. FacultyFeeback\n9. Exit\nEnter your choice: "
+        read -p "$(echo -e $menu)" choice
+        case $choice in
+                1) exam_result
+                        ;;
+                2) exam_schedule
+                        ;;
+                3) fee
+                        ;;
+                4) class_schedule
+                        ;;
+                5) course_list
+                        ;;
+                6) attendance
+                        ;;
+                7) class_schedule 1
+                        ;;
+                8) faculty
+                        ;;
+                9) count=1
+                        ;;
+                *) echo "Invalid choice"
+                        ;;
+        esac
 done
 
