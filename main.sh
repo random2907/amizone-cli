@@ -155,15 +155,15 @@ attendance(){
 
 	local attendance_request=$(curl -s 'https://s.amizone.net/Home/_Home?X-Requested-With=XMLHttpRequest'  -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$request; .ASPXAUTH=$asp")
 
-	local input_data=$(echo "$attendance_request" | grep -E 'sub-code|class-count' | sed 's/^[[:space:]]*//' | head -n 18 | sed -e 's/<[^>]*>//g' | sed 's/ \{2,\}/&\n/' | sed 's/\s*$//')
-
+        local input_data=$(echo "$attendance_request" | grep -E 'sub-code|class-count' | sed 's/^[[:space:]]*//' )
+        local count_percent=$(echo "$input_data" | wc -l )
+        local input_percent=$(echo "$input_data" | head -n "$(("$count_percent"/2))" | sed -e 's/<[^>]*>//g' | sed 's/ \{2,\}/&\n/' | sed 's/\s*$//')
 	local x='['
-	local xcount=$(echo "$input_data" | wc -l)
-
+	local xcount=$(echo "$input_percent" | wc -l)
 	for (( i=0; i<xcount; i+=3 )); do
-		local code=$(echo "$input_data" | sed -n "$((i+1))p")
-		local title=$(echo "$input_data" | sed -n "$((i+2))p")
-		local completion_percentage=$(echo "$input_data" | sed -n "$((i+3))p")
+		local code=$(echo "$input_percent" | sed -n "$((i+1))p")
+		local title=$(echo "$input_percent" | sed -n "$((i+2))p")
+		local completion_percentage=$(echo "$input_percent" | sed -n "$((i+3))p")
 		local x+='{"code":"'"$code"'", "title":"'"$title"'", "completion_percentage":"'"$completion_percentage"'"}'
 		if [ $((i+3)) -lt $xcount ]; then
 			x+=','
