@@ -20,9 +20,10 @@ exam_result(){
         
 	read -p "Enter the semester number: " sem
 
-	local exam=$(curl -s 'https://s.amizone.net/Examination/Examination?X-Requested-With=XMLHttpRequest' -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$requestcookie; ASP.NET_SessionId=$session; .ASPXAUTH=$asp" --data-raw "sem=$sem")
+	local exam=$(curl -s 'https://s.amizone.net/Examination/Examination/ExaminationListSemWise' -H 'Referer: https://s.amizone.net/Home' -H 'X-Requested-With: XMLHttpRequest' -H 'Connection: keep-alive' -H "Cookie: __RequestVerificationToken=$requestcookie; ASP.NET_SessionId=$session; .ASPXAUTH=$asp" --data-raw "sem=$sem")
 	local input_data=$(echo "$exam" | grep "data-title=" | head -n -4 | sed 's/^[[:space:]]*//' | sed -e 's/<[^>]*>//g' | sed 's/\s*$//')
-	local overall=$(echo "$exam" | grep "&nbsp" | tail -n 4 | sed 's/^[[:space:]]*//' | sed -e 's/<[^>]*>//g' | sed 's/\s*$//' | sed 's/&nbsp;//')
+        local line_no_overall=$(echo "$exam" | grep -n '<td data-title="Semester">' | cut -d: -f1 | head -n 1)
+        local overall=$(echo "$exam" | tail -n +$(($line_no_overall+1)) | grep "&nbsp" | sed 's/^[[:space:]]*//' | sed -e 's/<[^>]*>//g' | sed 's/\s*$//' | sed 's/&nbsp;//' | tail -n +$((1+4*("$sem"-1))) | head -n 4)
         
 	local x='['
         x+='{"Semester":"'"$(echo "$overall" | sed -n 1p)"'", "SGPA":"'"$(echo "$overall" | sed -n 2p)"'", "CGPA":"'"$(echo "$overall" | sed -n 3p)"'", "Back Papers":"'"$(echo "$overall" | sed -n 4p)"'"}'
